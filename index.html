@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DSS VIC</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f6f9;
+      color: #333;
+    }
+    .header {
+      background-color: #0068B5;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .container {
+      max-width: 550px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 25px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    .btn-nav {
+      background-color: #EF7A1D;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .btn-nav:hover {
+      background-color: #d66815;
+    }
+    .date-title {
+      font-size: 14px;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    .tema-title {
+      font-size: 22px;
+      color: #0068B5;
+      margin-top: 0;
+      margin-bottom: 15px;
+      line-height: 1.3;
+    }
+    .dss-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin-top: 15px;
+      display: block;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #444;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    .radio-group {
+      margin: 20px 0;
+    }
+    .radio-option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .radio-option input {
+      margin-right: 12px;
+      transform: scale(1.2);
+      cursor: pointer;
+    }
+    .btn-submit {
+      width: 100%;
+      background-color: #0068B5;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover {
+      background-color: #005392;
+    }
+    .btn-submit:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    #loading {
+      text-align: center;
+      color: #777;
+      font-style: italic;
+      padding: 10px 0;
+    }
+    .alert {
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 15px;
+      display: none;
+      font-weight: bold;
+      text-align: center;
+    }
+    .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .alert-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">DSS VIC</div>
+
+  <div class="container">
+    <div class="nav-buttons">
+      <button class="btn-nav" onclick="mudarDia(-1)">← Anterior</button>
+      <button class="btn-nav" onclick="mudarDia(1)">Próximo →</button>
+    </div>
+
+    <div class="card">
+      <div id="loading">Carregando tema do dia...</div>
+      <div id="dss-content" style="display:none;">
+        <div class="date-title" id="dss-date"></div>
+        <h2 class="tema-title" id="dss-tema"></h2>
+        <div id="image-container"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0; color:#444;">Registrar Presença</h3>
+      <form id="presence-form" onsubmit="enviarPresenca(event)">
+        <div class="form-group">
+          <label for="matricula">Matrícula:</label>
+          <input type="text" id="matricula" required placeholder="Digite sua matrícula">
+        </div>
+
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="resposta" value="Compreendi" required> Compreendi
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="resposta" value="Não compreendi"> Não compreendi
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="resposta" value="Gostaria de saber mais"> Gostaria de saber mais
+          </label>
+        </div>
+
+        <button type="submit" class="btn-submit">Confirmar</button>
+      </form>
+      <div id="alert-box" class="alert"></div>
+    </div>
+  </div>
+
+  <script>
+    // =====================================================
+    // COLOQUE ABAIXO A URL GERADA NA IMPLANTAÇÃO DO GOOGLE
+    // =====================================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbxpHD5pvnSMXMrx3C0PNQASZDoV6YazvYQHW6jkhskCSMbOwROTMVGBRCmGsu8Dz_JI/exec";
+    // =====================================================
+
+    let dataAtual = new Date();
+
+    function formatarDataEnvio(date) {
+      let tzoffset = date.getTimezoneOffset() * 60000;
+      return (new Date(date.getTime() - tzoffset)).toISOString().slice(0, 10);
+    }
+
+    function formatarDataExibicao(dateStr) {
+      const p = dateStr.split('-');
+      return `${p[2]}/${p[1]}/${p[0]}`;
+    }
+
+    function carregarDSS() {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('dss-content').style.display = 'none';
+      document.getElementById('image-container').innerHTML = '';
+      
+      const dataStr = formatarDataEnvio(dataAtual);
+      const url = `${API_URL}?action=getDSS&data=${dataStr}`;
+
+      fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error('Erro de conexão');
+          return response.json();
+        })
+        .then(dss => {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('dss-content').style.display = 'block';
+          document.getElementById('dss-date').innerText = formatarDataExibicao(dss.date);
+          document.getElementById('dss-tema').innerText = dss.tema;
+
+          if (dss.imagem && dss.imagem.trim() !== "") {
+            const img = document.createElement('img');
+            img.src = dss.imagem;
+            img.className = 'dss-image';
+            document.getElementById('image-container').appendChild(img);
+          }
+        })
+        .catch(err => {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('dss-content').style.display = 'block';
+          document.getElementById('dss-date').innerText = "Aviso";
+          document.getElementById('dss-tema').innerText = "Não foi possível buscar as informações da planilha. Verifique as configurações.";
+          console.error("Erro:", err);
+        });
+    }
+
+    function mudarDia(offset) {
+      dataAtual.setDate(dataAtual.getDate() + offset);
+      document.getElementById('alert-box').style.display = 'none';
+      carregarDSS();
+    }
+
+    function enviarPresenca(e) {
+      e.preventDefault();
+      
+      const btn = document.querySelector('.btn-submit');
+      btn.innerText = "Enviando...";
+      btn.disabled = true;
+
+      const matricula = document.getElementById('matricula').value;
+      const resposta = document.querySelector('input[name="resposta"]:checked').value;
+      
+      const url = `${API_URL}?action=registrar&matricula=${encodeURIComponent(matricula)}&resposta=${encodeURIComponent(resposta)}`;
+
+      const alertBox = document.getElementById('alert-box');
+      alertBox.style.display = 'none';
+
+      fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error('Erro de envio');
+          return response.json();
+        })
+        .then(resultado => {
+          alertBox.className = 'alert ' + (resultado.sucesso ? 'alert-success' : 'alert-error');
+          alertBox.innerText = resultado.mensagem;
+          alertBox.style.display = 'block';
+          
+          if(resultado.sucesso) {
+            document.getElementById('presence-form').reset();
+            const radios = document.querySelectorAll('input[name="resposta"]');
+            radios.forEach(radio => radio.checked = false);
+          }
+        })
+        .catch(err => {
+          alertBox.className = 'alert alert-error';
+          alertBox.innerText = "Falha crítica de comunicação com o servidor.";
+          alertBox.style.display = 'block';
+        })
+        .finally(() => {
+          btn.innerText = "Confirmar";
+          btn.disabled = false;
+        });
+    }
+
+    window.onload = carregarDSS;
+  </script>
+</body>
+</html>
