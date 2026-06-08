@@ -11,6 +11,7 @@
       padding: 0;
       background-color: #f4f6f9;
       color: #333;
+      -webkit-tap-highlight-color: transparent;
     }
     .header {
       background-color: #0068B5;
@@ -25,6 +26,7 @@
       max-width: 550px;
       margin: 20px auto;
       padding: 0 15px;
+      margin-bottom: 100px; /* Espaço extra no fundo para não cobrir conteúdo com o botão */
     }
     .card {
       background: white;
@@ -42,15 +44,21 @@
       background-color: #EF7A1D;
       color: white;
       border: none;
-      padding: 10px 16px;
+      padding: 12px 18px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
       font-size: 14px;
-      transition: background 0.2s;
     }
-    .btn-nav:hover {
-      background-color: #d66815;
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-bottom: 15px;
     }
     .date-title {
       font-size: 14px;
@@ -73,7 +81,6 @@
       border-radius: 6px;
       margin-top: 15px;
       display: block;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .form-group {
       margin-bottom: 18px;
@@ -84,7 +91,7 @@
       font-weight: bold;
       color: #444;
     }
-    input[type="text"] {
+    input[type="text"], textarea {
       width: 100%;
       padding: 12px;
       border: 1px solid #ccc;
@@ -92,45 +99,71 @@
       box-sizing: border-box;
       font-size: 16px;
     }
-    .radio-group {
-      margin: 20px 0;
+    textarea {
+      resize: vertical;
+      height: 100px;
+      font-family: inherit;
     }
     .radio-option {
       display: flex;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 16px;
     }
     .radio-option input {
       margin-right: 12px;
-      transform: scale(1.2);
-      cursor: pointer;
+      transform: scale(1.3);
     }
     .btn-submit {
       width: 100%;
       background-color: #0068B5;
       color: white;
       border: none;
-      padding: 14px;
+      padding: 15px;
       border-radius: 6px;
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-submit:hover {
-      background-color: #005392;
     }
     .btn-submit:disabled {
       background-color: #cccccc;
-      cursor: not-allowed;
     }
+    
+    /* BOTÃO FLUTUANTE DE SUGESTÃO COM DESCRIÇÃO AVANÇADA */
+    .fab {
+      position: fixed;
+      bottom: 25px;
+      right: 20px;
+      padding: 0 20px;
+      height: 52px;
+      background-color: #EF7A1D;
+      color: white;
+      border-radius: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+      cursor: pointer;
+      border: none;
+      z-index: 999;
+      transition: transform 0.1s ease;
+    }
+    .fab-icon {
+      font-size: 22px;
+      margin-right: 8px;
+      line-height: 1;
+    }
+    .fab:active {
+      transform: scale(0.95);
+    }
+    
     #loading {
       text-align: center;
       color: #777;
       font-style: italic;
-      padding: 10px 0;
     }
     .alert {
       padding: 12px;
@@ -140,23 +173,16 @@
       font-weight: bold;
       text-align: center;
     }
-    .alert-success {
-      background-color: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-    .alert-error {
-      background-color: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
+    .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
   </style>
 </head>
 <body>
 
-  <div class="header">DSS VIC</div>
+  <div class="header" id="app-title">DSS VIC</div>
 
-  <div class="container">
+  <!-- TELA 1: DIÁRIO (CONTEÚDO PRINCIPAL) -->
+  <div class="container" id="tela-principal">
     <div class="nav-buttons">
       <button class="btn-nav" onclick="mudarDia(-1)">← Anterior</button>
       <button class="btn-nav" onclick="mudarDia(1)">Próximo →</button>
@@ -179,7 +205,7 @@
           <input type="text" id="matricula" required placeholder="Digite sua matrícula">
         </div>
 
-        <div class="radio-group">
+        <div style="margin: 20px 0;">
           <label class="radio-option">
             <input type="radio" name="resposta" value="Compreendi" required> Compreendi
           </label>
@@ -191,17 +217,47 @@
           </label>
         </div>
 
-        <button type="submit" class="btn-submit">Confirmar</button>
+        <button type="submit" class="btn-submit" id="btn-presenca">Confirmar Presença</button>
       </form>
       <div id="alert-box" class="alert"></div>
     </div>
   </div>
 
+  <!-- TELA 2: FORMULÁRIO DE SUGESTÕES -->
+  <div class="container" id="tela-sugestao" style="display: none;">
+    <button class="btn-secondary" onclick="alternarTela('principal')">← Voltar pro DSS</button>
+    
+    <div class="card">
+      <h3 style="margin-top:0; color:#0068B5;">Sugerir Tema de DSS</h3>
+      <p style="color:#666; font-size:14px; margin-bottom:20px;">Tem alguma ideia importante de segurança ou melhoria? Envie sua sugestão abaixo!</p>
+      
+      <form id="sugestao-form" onsubmit="enviarSugestao(event)">
+        <div class="form-group">
+          <label for="matricula_sug">Sua Matrícula:</label>
+          <input type="text" id="matricula_sug" required placeholder="Digite sua matrícula">
+        </div>
+        
+        <div class="form-group">
+          <label for="texto_sugestao">Ideia/Tema Sugerido:</label>
+          <textarea id="texto_sugestao" required placeholder="Escreva aqui brevemente o tema que gostaria de ver no DSS..."></textarea>
+        </div>
+        
+        <button type="submit" class="btn-submit" id="btn-sugestao">Enviar Sugestão</button>
+      </form>
+      <div id="alert-sugestao" class="alert"></div>
+    </div>
+  </div>
+
+  <!-- BOTÃO FLUTUANTE ATUALIZADO COM DESCRIÇÃO -->
+  <button class="fab" id="fab-btn" onclick="alternarTela('sugestao')">
+    <span class="fab-icon">+</span> Sugerir Tema
+  </button>
+
   <script>
     // =====================================================
-    // COLOQUE ABAIXO A URL GERADA NA IMPLANTAÇÃO DO GOOGLE
+    // LEMBRE-SE DE COLAR SUA URL DO APPS SCRIPT ABAIXO!
     // =====================================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbxpHD5pvnSMXMrx3C0PNQASZDoV6YazvYQHW6jkhskCSMbOwROTMVGBRCmGsu8Dz_JI/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzGnXv5Q1qd_AISe3oUQ8vVnFghwyKCzUqhJKgz2wh85TsEA2x5cJJrAOleYmkPHt5o/exec";
     // =====================================================
 
     let dataAtual = new Date();
@@ -216,6 +272,28 @@
       return `${p[2]}/${p[1]}/${p[0]}`;
     }
 
+    function alternarTela(tela) {
+      const p = document.getElementById('tela-principal');
+      const s = document.getElementById('tela-sugestao');
+      const fab = document.getElementById('fab-btn');
+      const titulo = document.getElementById('app-title');
+
+      if (tela === 'sugestao') {
+        p.style.display = 'none';
+        s.style.display = 'block';
+        fab.style.display = 'none';
+        titulo.innerText = "Sugestões VIC";
+        document.getElementById('alert-sugestao').style.display = 'none';
+      } else {
+        s.style.display = 'none';
+        p.style.display = 'block';
+        fab.style.display = 'flex';
+        titulo.innerText = "DSS VIC";
+        document.getElementById('alert-box').style.display = 'none';
+      }
+      window.scrollTo(0,0);
+    }
+
     function carregarDSS() {
       document.getElementById('loading').style.display = 'block';
       document.getElementById('dss-content').style.display = 'none';
@@ -226,7 +304,7 @@
 
       fetch(url)
         .then(response => {
-          if (!response.ok) throw new Error('Erro de conexão');
+          if (!response.ok) throw new Error();
           return response.json();
         })
         .then(dss => {
@@ -242,12 +320,11 @@
             document.getElementById('image-container').appendChild(img);
           }
         })
-        .catch(err => {
+        .catch(() => {
           document.getElementById('loading').style.display = 'none';
           document.getElementById('dss-content').style.display = 'block';
           document.getElementById('dss-date').innerText = "Aviso";
-          document.getElementById('dss-tema').innerText = "Não foi possível buscar as informações da planilha. Verifique as configurações.";
-          console.error("Erro:", err);
+          document.getElementById('dss-tema').innerText = "Não foi possível buscar as informações da planilha.";
         });
     }
 
@@ -259,24 +336,17 @@
 
     function enviarPresenca(e) {
       e.preventDefault();
-      
-      const btn = document.querySelector('.btn-submit');
+      const btn = document.getElementById('btn-presenca');
       btn.innerText = "Enviando...";
       btn.disabled = true;
 
       const matricula = document.getElementById('matricula').value;
       const resposta = document.querySelector('input[name="resposta"]:checked').value;
-      
       const url = `${API_URL}?action=registrar&matricula=${encodeURIComponent(matricula)}&resposta=${encodeURIComponent(resposta)}`;
-
       const alertBox = document.getElementById('alert-box');
-      alertBox.style.display = 'none';
 
       fetch(url)
-        .then(response => {
-          if (!response.ok) throw new Error('Erro de envio');
-          return response.json();
-        })
+        .then(res => res.json())
         .then(resultado => {
           alertBox.className = 'alert ' + (resultado.sucesso ? 'alert-success' : 'alert-error');
           alertBox.innerText = resultado.mensagem;
@@ -284,17 +354,49 @@
           
           if(resultado.sucesso) {
             document.getElementById('presence-form').reset();
-            const radios = document.querySelectorAll('input[name="resposta"]');
-            radios.forEach(radio => radio.checked = false);
+            document.querySelectorAll('input[name="resposta"]').forEach(r => r.checked = false);
           }
         })
-        .catch(err => {
+        .catch(() => {
           alertBox.className = 'alert alert-error';
-          alertBox.innerText = "Falha crítica de comunicação com o servidor.";
+          alertBox.innerText = "Falha de comunicação.";
           alertBox.style.display = 'block';
         })
         .finally(() => {
-          btn.innerText = "Confirmar";
+          btn.innerText = "Confirmar Presença";
+          btn.disabled = false;
+        });
+    }
+
+    function enviarSugestao(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-sugestao');
+      btn.innerText = "Enviando...";
+      btn.disabled = true;
+
+      const matricula = document.getElementById('matricula_sug').value;
+      const sugestao = document.getElementById('texto_sugestao').value;
+      const url = `${API_URL}?action=sugerir&matricula=${encodeURIComponent(matricula)}&sugestao=${encodeURIComponent(sugestao)}`;
+      const alertBox = document.getElementById('alert-sugestao');
+
+      fetch(url)
+        .then(res => res.json())
+        .then(resultado => {
+          alertBox.className = 'alert ' + (resultado.sucesso ? 'alert-success' : 'alert-error');
+          alertBox.innerText = resultado.mensagem;
+          alertBox.style.display = 'block';
+          
+          if(resultado.sucesso) {
+            document.getElementById('sugestao-form').reset();
+          }
+        })
+        .catch(() => {
+          alertBox.className = 'alert alert-error';
+          alertBox.innerText = "Falha ao enviar sugestão.";
+          alertBox.style.display = 'block';
+        })
+        .finally(() => {
+          btn.innerText = "Enviar Sugestão";
           btn.disabled = false;
         });
     }
